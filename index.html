@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>五人行事曆</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>五人可用日期標示曆</title>
   <style>
     body {
       font-family: sans-serif;
@@ -11,59 +11,84 @@
     }
     table {
       border-collapse: collapse;
-      margin: 0 auto;
+      margin: 10px auto;
     }
     th, td {
       border: 1px solid #ccc;
       padding: 10px;
       width: 80px;
       height: 60px;
-      cursor: pointer;
+      vertical-align: top;
+      position: relative;
     }
     th {
       background-color: #f0f0f0;
     }
-    .user1 { background-color: rgba(255, 99, 132, 0.6); }
-    .user2 { background-color: rgba(54, 162, 235, 0.6); }
-    .user3 { background-color: rgba(255, 206, 86, 0.6); }
-    .user4 { background-color: rgba(75, 192, 192, 0.6); }
-    .user5 { background-color: rgba(153, 102, 255, 0.6); }
-    select {
-      margin: 10px;
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 1px;
+    }
+    .user1 { background-color: #ff6384; }
+    .user2 { background-color: #36a2eb; }
+    .user3 { background-color: #ffce56; }
+    .user4 { background-color: #4bc0c0; }
+    .user5 { background-color: #9966ff; }
+    .dot-container {
+      position: absolute;
+      bottom: 4px;
+      left: 4px;
+      right: 4px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+    select, button {
+      margin: 5px;
       padding: 5px;
     }
   </style>
 </head>
 <body>
   <h1>五人可用時間標示曆</h1>
-  <label for="userSelect">選擇使用者：</label>
-  <select id="userSelect">
-    <option value="user1">鄭</option>
-    <option value="user2">廖</option>
-    <option value="user3">杜</option>
-    <option value="user4">蔡</option>
-    <option value="user5">張</option>
-  </select>
-
+  <div>
+    <label for="userSelect">選擇使用者：</label>
+    <select id="userSelect">
+      <option value="user1">鄭</option>
+      <option value="user2">廖</option>
+      <option value="user3">杜</option>
+      <option value="user4">蔡</option>
+      <option value="user5">張</option>
+    </select>
+    <button onclick="prevMonth()">← 上一個月</button>
+    <button onclick="nextMonth()">下一個月 →</button>
+  </div>
+  <h3 id="monthTitle"></h3>
   <table id="calendar"></table>
 
   <script>
     const calendar = document.getElementById("calendar");
     const userSelect = document.getElementById("userSelect");
-    const daysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+    const monthTitle = document.getElementById("monthTitle");
 
     const today = new Date();
     let year = today.getFullYear();
     let month = today.getMonth();
 
-    function drawCalendar(year, month) {
+    const userClasses = ["user1", "user2", "user3", "user4", "user5"];
+
+    function drawCalendar(y, m) {
       calendar.innerHTML = "";
+      const firstDay = new Date(y, m, 1).getDay();
+      const totalDays = new Date(y, m + 1, 0).getDate();
 
-      const firstDay = new Date(year, month, 1).getDay();
-      const totalDays = daysInMonth(year, month);
+      const monthNames = ["一月", "二月", "三月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月"];
+      monthTitle.textContent = `${y}年 ${monthNames[m]}`;
 
-      const headerRow = calendar.insertRow();
       const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+      const headerRow = calendar.insertRow();
       weekdays.forEach(day => {
         const th = document.createElement("th");
         th.textContent = day;
@@ -73,14 +98,45 @@
       let row = calendar.insertRow();
       for (let i = 0; i < firstDay; i++) row.insertCell();
 
-      for (let date = 1; date <= totalDays; date++) {
+      for (let d = 1; d <= totalDays; d++) {
         if (row.cells.length === 7) row = calendar.insertRow();
         const cell = row.insertCell();
-        cell.textContent = date;
+        cell.innerHTML = `<div>${d}</div><div class='dot-container'></div>`;
+
+        const dotContainer = cell.querySelector(".dot-container");
+
         cell.addEventListener("click", () => {
-          cell.classList.toggle(userSelect.value);
+          const userClass = userSelect.value;
+          const existingDot = dotContainer.querySelector(`.${userClass}`);
+          if (existingDot) {
+            existingDot.remove();
+          } else {
+            const dot = document.createElement("div");
+            dot.classList.add("dot", userClass);
+            dotContainer.appendChild(dot);
+          }
         });
       }
+    }
+
+    function prevMonth() {
+      if (month === 0) {
+        year--;
+        month = 11;
+      } else {
+        month--;
+      }
+      drawCalendar(year, month);
+    }
+
+    function nextMonth() {
+      if (month === 11) {
+        year++;
+        month = 0;
+      } else {
+        month++;
+      }
+      drawCalendar(year, month);
     }
 
     drawCalendar(year, month);
