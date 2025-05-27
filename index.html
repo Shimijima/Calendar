@@ -1,133 +1,89 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>五人行事曆標記</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>五人行事曆</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; }
-    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); max-width: 500px; margin: 20px auto; }
-    .day { border: 1px solid #ccc; padding: 10px; height: 80px; position: relative; cursor: pointer; }
-    .day .dots { position: absolute; bottom: 5px; left: 5px; display: flex; gap: 3px; }
-    .dot { width: 10px; height: 10px; border-radius: 50%; }
-    .header { font-weight: bold; }
-    select, button { margin: 10px 5px; padding: 5px; }
+    body {
+      font-family: sans-serif;
+      text-align: center;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 0 auto;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      width: 80px;
+      height: 60px;
+      cursor: pointer;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    .user1 { background-color: rgba(255, 99, 132, 0.6); }
+    .user2 { background-color: rgba(54, 162, 235, 0.6); }
+    .user3 { background-color: rgba(255, 206, 86, 0.6); }
+    .user4 { background-color: rgba(75, 192, 192, 0.6); }
+    .user5 { background-color: rgba(153, 102, 255, 0.6); }
+    select {
+      margin: 10px;
+      padding: 5px;
+    }
   </style>
 </head>
 <body>
+  <h1>五人可用時間標示曆</h1>
+  <label for="userSelect">選擇使用者：</label>
+  <select id="userSelect">
+    <option value="user1">鄭</option>
+    <option value="user2">廖</option>
+    <option value="user3">杜</option>
+    <option value="user4">蔡</option>
+    <option value="user5">張</option>
+  </select>
 
-<h2>五人行事曆標記</h2>
-<label for="userSelect">選擇使用者：</label>
-<select id="userSelect">
-  <option value="user1">使用者 1（紅）</option>
-  <option value="user2">使用者 2（藍）</option>
-  <option value="user3">使用者 3（綠）</option>
-  <option value="user4">使用者 4（橙）</option>
-  <option value="user5">使用者 5（紫）</option>
-</select>
+  <table id="calendar"></table>
 
-<div>
-  <button onclick="changeMonth(-1)">← 上一個月</button>
-  <span id="monthLabel"></span>
-  <button onclick="changeMonth(1)">下一個月 →</button>
-</div>
+  <script>
+    const calendar = document.getElementById("calendar");
+    const userSelect = document.getElementById("userSelect");
+    const daysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
 
-<div class="calendar" id="calendar"></div>
+    const today = new Date();
+    let year = today.getFullYear();
+    let month = today.getMonth();
 
-<script>
-  const users = {
-    user1: 'red',
-    user2: 'blue',
-    user3: 'green',
-    user4: 'orange',
-    user5: 'purple'
-  };
+    function drawCalendar(year, month) {
+      calendar.innerHTML = "";
 
-  const calendarData = {}; // 儲存所有月份的標記資料
-  let currentYear = new Date().getFullYear();
-  let currentMonth = new Date().getMonth(); // 0~11
+      const firstDay = new Date(year, month, 1).getDay();
+      const totalDays = daysInMonth(year, month);
 
-  const currentUser = () => document.getElementById('userSelect').value;
-
-  function generateCalendar(year, month) {
-    const calendar = document.getElementById('calendar');
-    calendar.innerHTML = '';
-
-    const monthLabel = document.getElementById('monthLabel');
-    monthLabel.textContent = `${year} 年 ${month + 1} 月`;
-
-    const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
-    weekDays.forEach(day => {
-      const div = document.createElement('div');
-      div.className = 'header';
-      div.textContent = day;
-      calendar.appendChild(div);
-    });
-
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    for (let i = 0; i < firstDay; i++) {
-      const empty = document.createElement('div');
-      calendar.appendChild(empty);
-    }
-
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const div = document.createElement('div');
-      div.className = 'day';
-      div.textContent = d;
-
-      const dotContainer = document.createElement('div');
-      dotContainer.className = 'dots';
-      div.appendChild(dotContainer);
-
-      div.addEventListener('click', () => {
-        const user = currentUser();
-        calendarData[dateKey] = calendarData[dateKey] || [];
-        const index = calendarData[dateKey].indexOf(user);
-
-        if (index !== -1) {
-          calendarData[dateKey].splice(index, 1);
-        } else {
-          calendarData[dateKey].push(user);
-        }
-
-        renderDots(dotContainer, calendarData[dateKey]);
+      const headerRow = calendar.insertRow();
+      const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
+      weekdays.forEach(day => {
+        const th = document.createElement("th");
+        th.textContent = day;
+        headerRow.appendChild(th);
       });
 
-      if (calendarData[dateKey]) {
-        renderDots(dotContainer, calendarData[dateKey]);
+      let row = calendar.insertRow();
+      for (let i = 0; i < firstDay; i++) row.insertCell();
+
+      for (let date = 1; date <= totalDays; date++) {
+        if (row.cells.length === 7) row = calendar.insertRow();
+        const cell = row.insertCell();
+        cell.textContent = date;
+        cell.addEventListener("click", () => {
+          cell.classList.toggle(userSelect.value);
+        });
       }
-
-      calendar.appendChild(div);
     }
-  }
 
-  function renderDots(container, usersArray) {
-    container.innerHTML = '';
-    usersArray.forEach(u => {
-      const dot = document.createElement('div');
-      dot.className = 'dot';
-      dot.style.backgroundColor = users[u];
-      container.appendChild(dot);
-    });
-  }
-
-  function changeMonth(offset) {
-    currentMonth += offset;
-    if (currentMonth < 0) {
-      currentMonth = 11;
-      currentYear--;
-    } else if (currentMonth > 11) {
-      currentMonth = 0;
-      currentYear++;
-    }
-    generateCalendar(currentYear, currentMonth);
-  }
-
-  // 初始化
-  generateCalendar(currentYear, currentMonth);
-</script>
-
+    drawCalendar(year, month);
+  </script>
 </body>
 </html>
